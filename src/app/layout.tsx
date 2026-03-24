@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import "@/app/globals.css";   // ← ADD THIS AT THE TOP
+import "@/app/globals.css";
 import { CartProvider } from '@/context/CartContext';
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
