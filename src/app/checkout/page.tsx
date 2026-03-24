@@ -1,6 +1,6 @@
 'use client';
 import { useCart } from '@/context/CartContext';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,14 +24,16 @@ export default function Checkout() {
     address: '',
     deliveryInstructions: '',
   });
-  const [deliveryFee, setDeliveryFee] = useState(0);     // in dollars
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [distanceMiles, setDistanceMiles] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isValidZone, setIsValidZone] = useState(true);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const totalDollars = (getTotal() / 100) + deliveryFee;
 
+  // Load Google Places
   useEffect(() => {
     if (typeof window === 'undefined' || window.google?.maps) return;
 
@@ -56,34 +58,55 @@ export default function Checkout() {
     });
 
     autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      if (!place.geometry?.location) {
-        setErrorMsg('Please select a valid address from the dropdown');
-        return;
-      }
-
-      const lat = place.geometry.location.lat();
-      const lng = place.geometry.location.lng();
-      const formattedAddress = place.formatted_address || '';
-
-      setFormData(prev => ({ ...prev, address: formattedAddress }));
-
-      const dist = haversineDistance(RANCH_LAT, RANCH_LNG, lat, lng);
-      const rounded = Math.round(dist * 10) / 10;
-      setDistanceMiles(rounded);
-
-      let fee = 0;
-      let valid = true;
-      if (dist > MAX_MILES) {
-        valid = false;
-        setErrorMsg(`Sorry, we only deliver within ${MAX_MILES} miles of the ranch.`);
-      } else if (dist > FREE_MILES) {
-        fee = Math.ceil(dist - FREE_MILES) * SURCHARGE_PER_MILE;
-      }
-
-      setDeliveryFee(fee);
-      setIsValidZone(valid);
+      handlePlaceSelected(autocomplete.getPlace());
     });
+  };
+
+  // New: Manual validation for browser autocomplete / typing
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, address: value }));
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      if (value.length > 5 && window.google) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: value }, (results, status) => {
+          if (status === 'OK' && results[0]?.geometry?.location) {
+            const lat = results[0].geometry.location.lat();
+            const lng = results[0].geometry.location.lng();
+            handlePlaceSelected({ geometry: { location: { lat: () => lat, lng: () => lng } }, formatted_address: value });
+          }
+        });
+      }
+    }, 600); // debounce
+  }, []);
+
+  const handlePlaceSelected = (place: any) => {
+    if (!place.geometry?.location) return;
+
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+    const formattedAddress = place.formatted_address || formData.address;
+
+    setFormData(prev => ({ ...prev, address: formattedAddress }));
+
+    const dist = haversineDistance(RANCH_LAT, RANCH_LNG, lat, lng);
+    const rounded = Math.round(dist * 10) / 10;
+    setDistanceMiles(rounded);
+
+    let fee = 0;
+    let valid = true;
+    if (dist > MAX_MILES) {
+      valid = false;
+      setErrorMsg(`Sorry, we only deliver within ${MAX_MILES} miles of the ranch.`);
+    } else if (dist > FREE_MILES) {
+      fee = Math.ceil(dist - FREE_MILES) * SURCHARGE_PER_MILE;
+    }
+
+    setDeliveryFee(fee);
+    setIsValidZone(valid);
   };
 
   const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -117,11 +140,8 @@ export default function Checkout() {
       });
 
       const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error || 'No redirect URL');
-      }
+      if (data.url) window.location.href = data.url;
+      else throw new Error(data.error || 'No redirect URL');
     } catch (err: any) {
       setErrorMsg(err.message || 'Checkout failed');
     }
@@ -184,6 +204,7 @@ export default function Checkout() {
                 placeholder="Start typing your full address..."
                 className="rl-input"
                 required
+                onChange={handleInputChange}   // ← This catches browser autocomplete
               />
               {distanceMiles > 0 && (
                 <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--accent-light)', borderRadius: '12px', fontSize: '0.95rem' }}>
