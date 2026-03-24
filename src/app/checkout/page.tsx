@@ -32,8 +32,10 @@ export default function Checkout() {
   const inputRef = useRef<HTMLInputElement>(null);
   const totalDollars = (getTotal() / 100) + deliveryFee;
 
-  // Load Google Places API
+  // Load Google Places API once
   useEffect(() => {
+    if (typeof window === 'undefined' || window.google?.maps) return;
+
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&v=weekly`;
     script.async = true;
@@ -68,7 +70,7 @@ export default function Checkout() {
       setFormData(prev => ({ ...prev, address: formattedAddress }));
 
       const dist = haversineDistance(RANCH_LAT, RANCH_LNG, lat, lng);
-      const rounded = Math.round(dist * 10) / 10; // 1 decimal place
+      const rounded = Math.round(dist * 10) / 10;
       setDistanceMiles(rounded);
 
       let fee = 0;
@@ -110,7 +112,7 @@ export default function Checkout() {
           email: formData.email,
           address: formData.address,
           deliveryInstructions: formData.deliveryInstructions,
-          deliveryFeeCents: Math.round(deliveryFee * 100),   // Send as cents to Stripe
+          deliveryFeeCents: Math.round(deliveryFee * 100),
           distanceMiles,
         }),
       });
@@ -138,7 +140,6 @@ export default function Checkout() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Sticky Header */}
       <motion.header
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -160,7 +161,6 @@ export default function Checkout() {
       </motion.header>
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.25rem 5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem' }}>
-        {/* Form Side */}
         <div>
           <motion.h2 {...fieldFade(0.05)} style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: 600, marginBottom: '1.25rem' }}>
             Delivery Details
@@ -189,7 +189,9 @@ export default function Checkout() {
               {distanceMiles > 0 && (
                 <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--accent-light)', borderRadius: '12px', fontSize: '0.95rem' }}>
                   📍 {distanceMiles} miles from ranch<br />
-                  {deliveryFee === 0 ? '✅ Free delivery' : `🚚 Delivery fee: $${deliveryFee.toFixed(2)}`}
+                  {deliveryFee === 0 
+                    ? '✅ Free delivery (within 5 miles)' 
+                    : `🚚 Delivery fee: $${deliveryFee.toFixed(2)} (${SURCHARGE_PER_MILE.toFixed(2)}/mile after 5 miles)`}
                 </div>
               )}
             </motion.div>
@@ -197,7 +199,7 @@ export default function Checkout() {
             <motion.div {...fieldFade(0.31)}>
               <label style={labelStyle}>Delivery Instructions (optional)</label>
               <textarea
-                placeholder="Leave at porch, ring bell twice..."
+                placeholder="Leave at porch, ring bell twice, or any special notes for the driver..."
                 rows={3}
                 className="rl-input"
                 style={{ resize: 'none' }}
