@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     }
 
     const lineItems = [
+      // Egg products
       ...cart.map((item: CartItem) => ({
         price_data: {
           currency: 'usd',
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
         quantity: item.quantity,
       })),
 
+      // Delivery fee line item
       ...(deliveryFeeCents > 0 ? [{
         price_data: {
           currency: 'usd',
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
             name: 'Delivery Fee',
             description: `${distanceMiles} miles from the ranch`,
           },
-          unit_amount: deliveryFeeCents,
+          unit_amount: deliveryFeeCents,   // ← correctly in cents
         },
         quantity: 1,
       }] : []),
