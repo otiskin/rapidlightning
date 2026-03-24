@@ -24,7 +24,7 @@ export default function Checkout() {
     address: '',
     deliveryInstructions: '',
   });
-  const [deliveryFee, setDeliveryFee] = useState(0);     // in dollars
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [distanceMiles, setDistanceMiles] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isValidZone, setIsValidZone] = useState(true);
