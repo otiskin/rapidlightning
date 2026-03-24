@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!   // ← add this key to your .env.local if not present
+);
 
 export async function POST(request: Request) {
   try {
@@ -23,7 +29,6 @@ export async function POST(request: Request) {
     }
 
     const lineItems = [
-      // Egg products
       ...cart.map((item: any) => ({
         price_data: {
           currency: 'usd',
@@ -36,7 +41,6 @@ export async function POST(request: Request) {
         quantity: item.quantity,
       })),
 
-      // Delivery fee line item
       ...(deliveryFeeCents > 0 ? [{
         price_data: {
           currency: 'usd',
@@ -69,6 +73,41 @@ export async function POST(request: Request) {
         distanceMiles: distanceMiles.toString(),
       },
     });
+
+    // === MINIMAL SUPABASE SAVING (added only this block) ===
+    if (saveAsAccount && email) {
+      // Upsert profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          email,
+          full_name: name,
+          phone,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'email' });
+
+      if (profileError) console.error('Profile save error:', profileError);
+    }
+
+    // Always create order record
+    const { error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        stripe_session_id: session.id,
+        name,
+        email,
+        phone,
+        address,
+        delivery_instructions: deliveryInstructions,
+        sms_opt_in: smsOptIn,
+        delivery_fee_cents: deliveryFeeCents,
+        distance_miles: distanceMiles,
+        total_cents: lineItems.reduce((sum: number, item: any) => sum + (item.price_data?.unit_amount || 0) * (item.quantity || 1), 0),
+        status: 'pending',
+      });
+
+    if (orderError) console.error('Order save error:', orderError);
+    // === END SUPABASE SAVING ===
 
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
