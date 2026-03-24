@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 const RANCH_LAT = 48.3641170790182;
 const RANCH_LNG = -116.43288801972392;
 
-// Current values from your repo
 const FREE_MILES = 5;
 const SURCHARGE_PER_MILE = 0.5;
 const MAX_MILES = 25;

@@ -1,20 +1,30 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { saveOrderAndSendEmails } from '@/actions/saveOrder';
 
 export default function SuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const { clearCart } = useCart();
+  const hasFired = useRef(false);
 
-  // Clear cart when success page loads (after payment)
   useEffect(() => {
-    if (sessionId) {
-      clearCart();
-    }
+    if (!sessionId || hasFired.current) return;
+    hasFired.current = true;
+
+    (async () => {
+      try {
+        await saveOrderAndSendEmails(sessionId);
+      } catch (err) {
+        console.error('Failed to save order:', err);
+      } finally {
+        clearCart();
+      }
+    })();
   }, [sessionId, clearCart]);
 
   return (
@@ -32,7 +42,7 @@ export default function SuccessPage() {
         
         <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', marginBottom: '2rem' }}>
           Your order has been placed successfully.<br />
-          We’ll send a confirmation email shortly with tracking details.
+          We'll send a confirmation email shortly with tracking details.
         </p>
 
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '16px', padding: '2rem', marginBottom: '2rem' }}>

@@ -11,7 +11,7 @@ export async function saveOrderAndSendEmails(sessionId: string) {
 
   // 1. Retrieve real order data from Stripe
   const session = await stripe.checkout.sessions.retrieve(sessionId, {
-    expand: ['line_items'],
+    expand: ['line_items.data.price.product'],
   });
 
   const customerName = (session.metadata?.name as string) ?? 'Unknown';
@@ -19,9 +19,12 @@ export async function saveOrderAndSendEmails(sessionId: string) {
   const email = session.customer_email ?? '';
   const total = session.amount_total ?? 0;
 
-  // Calculate total quantity from line items
-  const quantity =
-    session.line_items?.data.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ?? 0;
+  // Calculate total quantity from line items (excluding delivery fee)
+  const eggLineItems = (session.line_items?.data ?? []).filter(
+    (item) => item.description !== `${item.quantity} miles from the ranch`
+  );
+
+  const quantity = eggLineItems.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
 
   const orderData = {
     customer_name: customerName,
@@ -37,26 +40,34 @@ export async function saveOrderAndSendEmails(sessionId: string) {
   const { error: insertError } = await supabase.from('orders').insert([orderData]);
   if (insertError) throw new Error(`Order insert failed: ${insertError.message}`);
 
-  // 3. Decrement stock for each product ordered
-  for (const item of session.line_items?.data ?? []) {
-    // Match by product name — or swap to product ID via metadata if you prefer
-    const { data: product } = await supabase
+  // 3. Decrement stock for each egg product ordered
+  for (const item of eggLineItems) {
+    const productData = item.price?.product as Stripe.Product | undefined;
+    const productName = productData?.name ?? item.description ?? '';
+
+    if (!productName) continue;
+
+    const { data: product, error: fetchError } = await supabase
       .from('products')
       .select('id, stock, name')
-      .eq('id', 1) // Update this if you have multiple products
+      .ilike('name', productName)
       .single();
 
-    if (product) {
-      const newStock = Math.max(0, product.stock - (item.quantity ?? 0));
-      const { error: stockError } = await supabase
-        .from('products')
-        .update({ stock: newStock })
-        .eq('id', product.id);
-      if (stockError) console.error('Stock update failed:', stockError.message);
+    if (fetchError || !product) {
+      console.error(`Product not found for "${productName}":`, fetchError?.message);
+      continue;
     }
+
+    const newStock = Math.max(0, product.stock - (item.quantity ?? 0));
+    const { error: stockError } = await supabase
+      .from('products')
+      .update({ stock: newStock })
+      .eq('id', product.id);
+
+    if (stockError) console.error('Stock update failed:', stockError.message);
   }
 
-  // 4. Notify you / the ranch
+  // 4. Notify the ranch
   await resend.emails.send({
     from: 'Rapid Lightning <no-reply@rapidlightning.vercel.app>',
     to: ['your-email@example.com', 'ranch-email@example.com'], // ← update these

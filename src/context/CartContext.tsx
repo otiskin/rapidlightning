@@ -10,7 +10,7 @@ export type CartItem = {
 
 type CartContextType = {
   cart: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => boolean;
   removeFromCart: (id: number) => void;
   clearCart: () => void;
   getTotal: () => number;
@@ -30,16 +30,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('rapidlightning-cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = useCallback((newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
-    setCart((prev) => {
-      const existing = prev.findIndex(i => i.id === newItem.id);
-      if (existing !== -1) {
-        const updated = [...prev];
-        updated[existing].quantity += newItem.quantity ?? 1;
-        return updated;
-      }
-      return [...prev, { ...newItem, quantity: newItem.quantity ?? 1 }];
-    });
+  const addToCart = useCallback((newItem: Omit<CartItem, 'quantity'> & { quantity?: number }): boolean => {
+    try {
+      setCart((prev) => {
+        const existing = prev.findIndex(i => i.id === newItem.id);
+        if (existing !== -1) {
+          const updated = [...prev];
+          updated[existing] = {
+            ...updated[existing],
+            quantity: updated[existing].quantity + (newItem.quantity ?? 1),
+          };
+          return updated;
+        }
+        return [...prev, { ...newItem, quantity: newItem.quantity ?? 1 }];
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }, []);
 
   const removeFromCart = useCallback((id: number) => {
