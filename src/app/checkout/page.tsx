@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const RANCH_LAT = 48.3641170790182;
 const RANCH_LNG = -116.43288801972392;
+
+// Current values from your repo
 const FREE_MILES = 5;
 const SURCHARGE_PER_MILE = 0.5;
 const MAX_MILES = 25;
@@ -24,19 +26,19 @@ export default function Checkout() {
     address: '',
     deliveryInstructions: '',
   });
-  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [deliveryFeeDollars, setDeliveryFeeDollars] = useState(0);
   const [distanceMiles, setDistanceMiles] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isValidZone, setIsValidZone] = useState(true);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const totalDollars = (getTotal() / 100) + deliveryFee;
+
+  const cartTotalDollars = getTotal() / 100;
+  const finalTotalDollars = cartTotalDollars + deliveryFeeDollars;
 
   // Load Google Places
   useEffect(() => {
-    if (typeof window === 'undefined' || window.google?.maps) return;
-
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&v=weekly`;
     script.async = true;
@@ -62,7 +64,6 @@ export default function Checkout() {
     });
   };
 
-  // New: Manual validation for browser autocomplete / typing
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, address: value }));
@@ -76,11 +77,14 @@ export default function Checkout() {
           if (status === 'OK' && results[0]?.geometry?.location) {
             const lat = results[0].geometry.location.lat();
             const lng = results[0].geometry.location.lng();
-            handlePlaceSelected({ geometry: { location: { lat: () => lat, lng: () => lng } }, formatted_address: value });
+            handlePlaceSelected({ 
+              geometry: { location: { lat: () => lat, lng: () => lng } }, 
+              formatted_address: value 
+            });
           }
         });
       }
-    }, 600); // debounce
+    }, 600);
   }, []);
 
   const handlePlaceSelected = (place: any) => {
@@ -105,7 +109,7 @@ export default function Checkout() {
       fee = Math.ceil(dist - FREE_MILES) * SURCHARGE_PER_MILE;
     }
 
-    setDeliveryFee(fee);
+    setDeliveryFeeDollars(fee);
     setIsValidZone(valid);
   };
 
@@ -113,9 +117,9 @@ export default function Checkout() {
     const R = 3958.8;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    const a = Math.sin(dLat / 2) ** 2 +
               Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+              Math.sin(dLon / 2) ** 2;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
@@ -134,7 +138,7 @@ export default function Checkout() {
           email: formData.email,
           address: formData.address,
           deliveryInstructions: formData.deliveryInstructions,
-          deliveryFeeCents: Math.round(deliveryFee * 100),
+          deliveryFeeCents: Math.round(deliveryFeeDollars * 100),
           distanceMiles,
         }),
       });
@@ -204,14 +208,14 @@ export default function Checkout() {
                 placeholder="Start typing your full address..."
                 className="rl-input"
                 required
-                onChange={handleInputChange}   // ← This catches browser autocomplete
+                onChange={handleInputChange}
               />
               {distanceMiles > 0 && (
                 <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--accent-light)', borderRadius: '12px', fontSize: '0.95rem' }}>
                   📍 {distanceMiles} miles from ranch<br />
-                  {deliveryFee === 0 
-                    ? '✅ Free delivery (within 5 miles)' 
-                    : `🚚 Delivery fee: $${deliveryFee.toFixed(2)} (${SURCHARGE_PER_MILE.toFixed(2)}/mile after 5 miles)`}
+                  {deliveryFeeDollars === 0 
+                    ? `✅ Free delivery (within ${FREE_MILES} miles)` 
+                    : `🚚 Delivery fee: $${deliveryFeeDollars.toFixed(2)}`}
                 </div>
               )}
             </motion.div>
@@ -237,7 +241,7 @@ export default function Checkout() {
             </AnimatePresence>
 
             <motion.button type="submit" disabled={!isValidZone} className="rl-btn-pay" whileTap={{ scale: 0.98 }}>
-              Pay ${totalDollars.toFixed(2)} with Stripe
+              Pay ${finalTotalDollars.toFixed(2)} with Stripe
             </motion.button>
           </form>
         </div>
@@ -262,16 +266,16 @@ export default function Checkout() {
             </div>
           ))}
 
-          {deliveryFee > 0 && (
+          {deliveryFeeDollars > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid var(--border)', color: '#d97706' }}>
               <span>Delivery Fee ({distanceMiles} miles)</span>
-              <span>${deliveryFee.toFixed(2)}</span>
+              <span>${deliveryFeeDollars.toFixed(2)}</span>
             </div>
           )}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.75rem', fontSize: '1.35rem', fontWeight: 700, fontFamily: 'var(--font-display)' }}>
             <span>Total</span>
-            <span>${totalDollars.toFixed(2)}</span>
+            <span>${finalTotalDollars.toFixed(2)}</span>
           </div>
         </motion.div>
       </div>
