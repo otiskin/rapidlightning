@@ -22,8 +22,11 @@ export default function Checkout() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     address: '',
     deliveryInstructions: '',
+    smsOptIn: true,
+    saveAsAccount: false,
   });
   const [deliveryFeeDollars, setDeliveryFeeDollars] = useState(0);
   const [distanceMiles, setDistanceMiles] = useState(0);
@@ -135,8 +138,11 @@ export default function Checkout() {
           cart,
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           address: formData.address,
           deliveryInstructions: formData.deliveryInstructions,
+          smsOptIn: formData.smsOptIn,
+          saveAsAccount: formData.saveAsAccount,
           deliveryFeeCents: Math.round(deliveryFeeDollars * 100),
           distanceMiles,
         }),
@@ -198,6 +204,44 @@ export default function Checkout() {
               <label style={labelStyle}>Email Address</label>
               <input type="email" placeholder="jane@example.com" required className="rl-input" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
             </motion.div>
+
+            {/* === NEW FIELDS (minimal addition) === */}
+            <motion.div {...fieldFade(0.20)}>
+              <label style={labelStyle}>Phone Number</label>
+              <input 
+                type="tel" 
+                placeholder="(555) 555-5555" 
+                required 
+                className="rl-input" 
+                value={formData.phone} 
+                onChange={e => setFormData({ ...formData, phone: e.target.value })} 
+              />
+            </motion.div>
+
+            <motion.div {...fieldFade(0.27)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input 
+                type="checkbox" 
+                checked={formData.smsOptIn}
+                onChange={e => setFormData({ ...formData, smsOptIn: e.target.checked })}
+                style={{ accentColor: 'var(--gold)' }}
+              />
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                Opt in to text message delivery updates
+              </label>
+            </motion.div>
+
+            <motion.div {...fieldFade(0.27)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input 
+                type="checkbox" 
+                checked={formData.saveAsAccount}
+                onChange={e => setFormData({ ...formData, saveAsAccount: e.target.checked })}
+                style={{ accentColor: 'var(--gold)' }}
+              />
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                Save my details as an account (for faster future orders)
+              </label>
+            </motion.div>
+            {/* === END NEW FIELDS === */}
 
             <motion.div {...fieldFade(0.24)}>
               <label style={labelStyle}>Delivery Address</label>
