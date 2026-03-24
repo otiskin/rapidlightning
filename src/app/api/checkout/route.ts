@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { CartItem } from '@/context/CartContext';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
 
     const lineItems = [
       // Egg products
-      ...cart.map((item: CartItem) => ({
+      ...cart.map((item: any) => ({
         price_data: {
           currency: 'usd',
           product_data: {
@@ -42,7 +41,7 @@ export async function POST(request: Request) {
             name: 'Delivery Fee',
             description: `${distanceMiles} miles from the ranch`,
           },
-          unit_amount: deliveryFeeCents,   // ← correctly in cents
+          unit_amount: deliveryFeeCents,
         },
         quantity: 1,
       }] : []),
