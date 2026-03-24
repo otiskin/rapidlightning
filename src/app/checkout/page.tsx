@@ -32,7 +32,6 @@ export default function Checkout() {
   const inputRef = useRef<HTMLInputElement>(null);
   const totalDollars = (getTotal() / 100) + deliveryFee;
 
-  // Load Google Places API once
   useEffect(() => {
     if (typeof window === 'undefined' || window.google?.maps) return;
 
@@ -222,7 +221,6 @@ export default function Checkout() {
           </form>
         </div>
 
-        {/* Order Summary */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
