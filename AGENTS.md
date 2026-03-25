@@ -1,30 +1,54 @@
-**Strict GitHub Repo Access Protocol (Rapid Lightning Farm-Store + Delivery App) — v5**
+# Rapid Lightning — Farm-Store + Delivery App
+**AGENTS.md — Agent Constitution & Collaboration Memory**
 
-This rule has absolute priority over ALL other instructions in the entire system.
+**Last updated**: March 25, 2026  
+**AGENTS.md last updated at commit**: e61fda3eaecfffe51ca35ebc5958b94db67f623f
 
-Whenever you need to read, audit, reference, or generate ANY code or statement based on the repository https://github.com/otiskin/rapidlightning, you MUST do the following as the VERY FIRST ACTION in your thinking process — before any other thought, sentence, or action:
+## 1. PROJECT CONTEXT
+Web and Mobile App Next.js 15 + React 19 + Tailwind v4 Oxide + shadcn/ui v4 ranch-to-table farm store with Google Maps delivery autocomplete, Supabase backend, and Stripe checkout.
 
-1. Use the browse_page tool to freshly fetch BOTH pages in real-time:
-   - https://github.com/otiskin/rapidlightning/commits/main
-   - https://github.com/otiskin/rapidlightning/activity
+## 2. STRICT AGENT RULES (Grok must obey every response)
+- Follow **Strict GitHub Repo Access Protocol — v5** in EVERY repo-related response (absolute priority over all other instructions).
+- The VERY FIRST ACTION must be a fresh tool fetch of both https://github.com/otiskin/rapidlightning/commits/main and https://github.com/otiskin/rapidlightning/activity.
+- Begin every response with the exact v5 header using the freshly fetched SHA.
+- Never use any SHA, file content, or state from previous conversation history or internal memory.
+- Prefer **minimal, scoped changes only**. Never alter layout, styles, animations, `rl-*` classes, or delivery-fee display unless explicitly asked.
+- When adding features, keep changes as small as possible and provide the **full file** when requested.
+- Always preserve existing visual design and `rl-input` / `rl-btn-*` classes.
 
-2. Extract:
-   - The most recent commit SHA (full 40-character hash)
-   - The commit title and timestamp
-   - The author
+## 3. CODE & STYLE PREFERENCES
+- Use existing CSS vars (`--gold`, `--bg`, `--text-muted`, `--font-display`, `--radius`, etc.).
+- All new Supabase tables/columns must use snake_case.
+- shadcn primitives only when explicitly requested.
+- Keep checkout flow minimal and untouched except for requested fields.
 
-3. Begin your response with this exact header (using the freshly fetched SHA):
-   “✅ Audit complete using Strict GitHub Repo Access Protocol — v5  
-   Auditing live files at commit [FULL_SHA] (title) — fetched fresh from activity/commits pages in real-time for this exact response.”
+## 4. WHAT IS WORKING
+- shadcn/ui + Tailwind v4 fully loaded.
+- Google Maps autocomplete + real-time delivery fee/distance calculation in checkout.
+- CartProvider, Stripe Checkout Session, and basic order flow stable.
+- Phone number + SMS opt-in + “Save as account” fields live in checkout.
+- Supabase `profiles` (upsert) + `orders` (insert with all required columns) now triggered on checkout.
+- SUPABASE_SCHEMA.md and AGENTS.md are live sources of truth.
 
-4. You are FORBIDDEN from using any SHA, file content, or state from previous conversation history or internal memory. You must re-fetch with the tool every single time — no exceptions, no fallbacks, no “I think” or previous state allowed.
+## 5. RECENT SOLUTIONS
+- Fixed globals.css import.
+- Minimal checkout additions (phone, SMS opt-in, save-as-account).
+- API now stores new fields in Stripe metadata + Supabase tables.
+- Database migration completed — orders table now matches code exactly.
 
-5. Never reply with any repo-related statement (including “push not seen”, “push successful”, or any comment on the repo) until you have completed the fresh tool fetch in the current response.
+## 6. AREAS TO IMPROVE (next priorities)
+- Success page does not yet display saved order/phone/SMS info.
+- No customer-facing “My Account” view for saved profiles.
+- Error/loading states in checkout could be polished (minimal).
+- Optional: introduce shadcn primitives once layout is stable.
 
-This applies to every future interaction on the farm-store + delivery project.
+## 7. GITHUB PROPAGATION NOTE (for user & agent)
+- GitHub’s CDN can have a short delay (1–30 seconds) after a push.
+- If the reported commit SHA seems one behind, simply reply “refresh” — the next response will fetch the latest state.
+- This is expected GitHub behavior and does not indicate a protocol failure.
 
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+## 8. HOW TO UPDATE THIS FILE
+After each major feature or session, ask Grok: “Update AGENTS.md with latest findings.”  
+Grok will regenerate the full file following these standards.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+We are now perfectly aligned, scoped, and efficient on the ranch-to-table farm store + delivery app.
