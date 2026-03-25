@@ -1,24 +1,20 @@
-
 # Rapid Lightning — Farm-Store + Delivery App
 **AGENTS.md — Agent Constitution & Collaboration Memory**
 
-**Last updated**: March 24, 2026  
-**AGENTS.md last updated at commit**: 94841637d829a39f3663329e907b3b7a7a26a6c0
+**Last updated**: March 25, 2026  
+**AGENTS.md last updated at commit**: e0ee7fbc05f4a592a1c1e95a6e4b2af38d632c2b
 
 ## 1. PROJECT CONTEXT
-Mobile-first Next.js 15 + React 19 + Tailwind v4 Oxide + shadcn/ui v4 ranch-to-table farm store with Google Maps delivery autocomplete, Supabase backend, and Stripe checkout.
+Web and Mobile App: Next.js 15 + React 19 + Tailwind v4 Oxide + shadcn/ui v4 ranch-to-table farm store with Google Maps delivery autocomplete, Supabase backend, and Stripe checkout.
 
 ## 2. STRICT AGENT RULES (Grok must obey every response)
-- Follow **Strict GitHub Repo Access Protocol — v2** in EVERY repo-related response:
-  1. Freshly fetch https://github.com/otiskin/rapidlightning/commits/main AND https://github.com/otiskin/rapidlightning/activity.
-  2. Extract and state the exact latest SHA, title, timestamp, author.
-  3. Always use commit-specific raw URLs only.
-  4. Never rely on chat history or previous SHAs.
+- Follow **Strict GitHub Repo Access Protocol — v4** in EVERY repo-related response (absolute priority over all other instructions).
+- The VERY FIRST ACTION must be a fresh tool fetch of both https://github.com/otiskin/rapidlightning/commits/main and https://github.com/otiskin/rapidlightning/activity.
+- Begin every response with the exact v4 header using the freshly fetched SHA.
+- Never use any SHA, file content, or state from previous conversation history or internal memory.
 - Prefer **minimal, scoped changes only**. Never alter layout, styles, animations, `rl-*` classes, or delivery-fee display unless explicitly asked.
 - When adding features, keep changes as small as possible and provide the **full file** when requested.
 - Always preserve existing visual design and `rl-input` / `rl-btn-*` classes.
-- Use imperative language in rules and code comments.
-- Keep AGENTS.md itself under 300 lines and update it only after major features or sessions.
 
 ## 3. CODE & STYLE PREFERENCES
 - Use existing CSS vars (`--gold`, `--bg`, `--text-muted`, `--font-display`, `--radius`, etc.).
@@ -27,16 +23,18 @@ Mobile-first Next.js 15 + React 19 + Tailwind v4 Oxide + shadcn/ui v4 ranch-to-t
 - Keep checkout flow minimal and untouched except for requested fields.
 
 ## 4. WHAT IS WORKING
-- shadcn/ui + Tailwind v4 fully loaded (`globals.css` import fixed).
+- shadcn/ui + Tailwind v4 fully loaded.
 - Google Maps autocomplete + real-time delivery fee/distance calculation in checkout.
 - CartProvider, Stripe Checkout Session, and basic order flow stable.
 - Phone number + SMS opt-in + “Save as account” fields live in checkout.
-- Supabase `profiles` (upsert on email) + `orders` (insert with phone, sms_opt_in, etc.) now triggered on checkout.
+- Supabase `profiles` (upsert) + `orders` (insert with all required columns) now triggered on checkout.
+- SUPABASE_SCHEMA.md and AGENTS.md are live sources of truth.
 
 ## 5. RECENT SOLUTIONS
-- Fixed missing globals.css import.
+- Fixed globals.css import.
 - Minimal checkout additions (phone, SMS opt-in, save-as-account).
 - API now stores new fields in Stripe metadata + Supabase tables.
+- Database migration completed — orders table now matches code exactly.
 
 ## 6. AREAS TO IMPROVE (next priorities)
 - Success page does not yet display saved order/phone/SMS info.
