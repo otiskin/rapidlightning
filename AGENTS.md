@@ -46,6 +46,7 @@ Web and Mobile App Next.js 15 + React 19 + Tailwind v4 Oxide + shadcn/ui v4 ranc
 - GitHub’s CDN can have a short delay (1–30 seconds) after a push.
 - If the reported commit SHA seems one behind, simply reply “refresh” — the next response will fetch the latest state.
 - This is expected GitHub behavior and does not indicate a protocol failure.
+- added V6 protocol with a double refetch instruction. 
 
 ## 8. HOW TO UPDATE THIS FILE
 After each major feature or session, ask Grok: “Update AGENTS.md with latest findings.”  
